@@ -45,8 +45,8 @@ namespace HealthCare.Controllers
             await _repository.Create(patient);
             return CreatedAtRoute("GetPatientById", new { id = patient.Id }, patient);
         }
-        [HttpPut("UpdateDoctor/{id}")]
-        public async Task<IActionResult> UpdateMovie(int id, [FromBody] Patient patient)
+        [HttpPut("UpdatePatient/{id}")]
+        public async Task<IActionResult> UpdatePatient(int id, [FromBody] Patient patient)
         {
             if (!ModelState.IsValid)
             {
@@ -57,7 +57,7 @@ namespace HealthCare.Controllers
             {
                 return NoContent();
             }
-            return NotFound("Doctor not found");
+            return NotFound("Patient not found");
         }
         [HttpDelete("DeletePatient/{id}")]
         public async Task<IActionResult> DeletePatient(int id)

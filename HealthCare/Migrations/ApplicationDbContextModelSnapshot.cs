@@ -29,6 +29,12 @@ namespace HealthCare.Migrations
                     b.Property<string>("DoctorName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("EmailId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Specialization")
                         .HasColumnType("nvarchar(max)");
 

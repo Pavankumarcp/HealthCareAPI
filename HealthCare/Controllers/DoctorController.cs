@@ -4,9 +4,16 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace HealthCare.Controllers
 {
@@ -17,32 +24,48 @@ namespace HealthCare.Controllers
         private readonly IRepository<Doctor> _repository;
         //private readonly DoctorRepository _doctorRepository;
         private readonly IGetRepository<Doctor> _doctorgetRepository;
-        //private readonly IConfiguration _Configuration;
-        //private readonly ApplicationDbContext _dbContext;
+        private readonly IConfiguration _Configuration;
+        private readonly ApplicationDbContext _dbContext;
 
-        public DoctorController(IRepository<Doctor> repository, IGetRepository<Doctor> doctorgetRepository/*IConfiguration Configuration,ApplicationDbContext applicationDbContext*/)
+        public DoctorController(IRepository<Doctor> repository, IGetRepository<Doctor> doctorgetRepository, IConfiguration Configuration, ApplicationDbContext applicationDbContext)
         {
             _repository = repository;
             //_doctorRepository = doctorRepository;
             _doctorgetRepository = doctorgetRepository;
-            //_Configuration = Configuration;
-            //_dbContext = applicationDbContext;
+            _Configuration = Configuration;
+            _dbContext = applicationDbContext;
         }
-        //[HttpPost("Login")]
-        //public IActionResult Login([FromBody] Doctor doctor)
-        //{
-        //    var logu = _dbContext.Doctors.FirstOrDefault(a => a.EmailId == doctor.EmailId);
-        //    if (logu == null)
-        //    {
-        //        return BadRequest("Invalid Username");
-        //    }
-        //    var logp = _dbContext.Doctors.FirstOrDefault(b => b.Password == doctor.Password);
-        //    if (logp == null)
-        //    {
-        //        return BadRequest("Invalid Password");
-        //    }
-        //    return Ok();
-        //}
+        [HttpPost("Login")]
+        public IActionResult Login([FromBody] Doctor doctor)
+        {
+            var logu = _dbContext.Doctors.FirstOrDefault(a => a.EmailId == doctor.EmailId && a.Password == doctor.Password);
+            if (logu == null)
+            {
+                return BadRequest("Invalid Username or Password");
+            }
+           var token=GenerateToken(logu);
+            if(token== null)
+            {
+                return NotFound("Invalid Credentials");
+            }
+            return Ok(token);
+        }
+        [NonAction]
+        public string GenerateToken(Doctor doctor)
+        {
+            var securitkey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuration["JWT:SecretKey"]));
+            var credentials = new SigningCredentials(securitkey, SecurityAlgorithms.HmacSha512);
+            var claim = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name,doctor.DoctorName),
+                new Claim(ClaimTypes.Email,doctor.EmailId),
+                //  new Claim(ClaimTypes.Role,doctor.Role),
+            };
+            var token = new JwtSecurityToken(issuer: _Configuration["JWT:issuer"], audience: _Configuration["JWT:audience"],claims:claim,expires:DateTime.Now.AddDays(1),signingCredentials:credentials);
+            var tokens=new JwtSecurityTokenHandler().WriteToken(token);
+            return tokens;
+
+        }
         [HttpGet("GetallDoctors")]
         public IEnumerable<Doctor> GetDoctors()
         {
