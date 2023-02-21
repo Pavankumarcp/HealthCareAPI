@@ -36,11 +36,10 @@ namespace HealthCare
             o.TokenValidationParameters= new TokenValidationParameters
             {
                 ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
+                ValidateAudience = false,
+                ValidateLifetime = false,
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = Configuration["JWT:issuer"],
-                ValidAudience = Configuration["JWT:audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:SecretKey"]))
             });
             services.AddDbContext<ApplicationDbContext>(o => o.UseSqlServer(Configuration.GetConnectionString("HCConnection")));
@@ -70,7 +69,7 @@ namespace HealthCare
 
             app.UseRouting();
             app.UseAuthentication();
-
+            
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

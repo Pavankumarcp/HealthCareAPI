@@ -1,5 +1,6 @@
 ﻿using HealthCare.Models;
 using HealthCare.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,49 +23,19 @@ namespace HealthCare.Controllers
     public class DoctorController : ControllerBase
     {
         private readonly IRepository<Doctor> _repository;
-        //private readonly DoctorRepository _doctorRepository;
+        private readonly DoctorRepository _doctorRepository;
         private readonly IGetRepository<Doctor> _doctorgetRepository;
         private readonly IConfiguration _Configuration;
         private readonly ApplicationDbContext _dbContext;
 
-        public DoctorController(IRepository<Doctor> repository, IGetRepository<Doctor> doctorgetRepository, IConfiguration Configuration, ApplicationDbContext applicationDbContext)
+        public DoctorController(IRepository<Doctor> repository, IGetRepository<Doctor> doctorgetRepository, IConfiguration Configuration, ApplicationDbContext applicationDbContext, DoctorRepository doctorRepository)
         {
             _repository = repository;
             //_doctorRepository = doctorRepository;
             _doctorgetRepository = doctorgetRepository;
             _Configuration = Configuration;
             _dbContext = applicationDbContext;
-        }
-        [HttpPost("Login")]
-        public IActionResult Login([FromBody] Doctor doctor)
-        {
-            var logu = _dbContext.Doctors.FirstOrDefault(a => a.EmailId == doctor.EmailId && a.Password == doctor.Password);
-            if (logu == null)
-            {
-                return BadRequest("Invalid Username or Password");
-            }
-           var token=GenerateToken(logu);
-            if(token== null)
-            {
-                return NotFound("Invalid Credentials");
-            }
-            return Ok(token);
-        }
-        [NonAction]
-        public string GenerateToken(Doctor doctor)
-        {
-            var securitkey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuration["JWT:SecretKey"]));
-            var credentials = new SigningCredentials(securitkey, SecurityAlgorithms.HmacSha512);
-            var claim = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name,doctor.DoctorName),
-                new Claim(ClaimTypes.Email,doctor.EmailId),
-                //  new Claim(ClaimTypes.Role,doctor.Role),
-            };
-            var token = new JwtSecurityToken(issuer: _Configuration["JWT:issuer"], audience: _Configuration["JWT:audience"],claims:claim,expires:DateTime.Now.AddDays(1),signingCredentials:credentials);
-            var tokens=new JwtSecurityTokenHandler().WriteToken(token);
-            return tokens;
-
+            _doctorRepository = doctorRepository;
         }
         [HttpGet("GetallDoctors")]
         public IEnumerable<Doctor> GetDoctors()
@@ -83,6 +54,7 @@ namespace HealthCare.Controllers
             return NotFound();
         }
         [HttpPost("CreateDoctor")]
+        [Authorize(Roles ="Admin")]
         public async Task<IActionResult> CreateDoctor([FromBody]Doctor doctor)
         {
             if (!ModelState.IsValid)
@@ -116,5 +88,6 @@ namespace HealthCare.Controllers
             }
             return NotFound("Doctor not found");
         }
+      
     }
 }

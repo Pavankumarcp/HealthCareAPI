@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using HealthCare.Models;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace HealthCare.Repositories
@@ -15,5 +16,6 @@ namespace HealthCare.Repositories
         Task<T> Update(int id, T obj);
 
         Task<T> Delete(int id);
+        
     }
 }

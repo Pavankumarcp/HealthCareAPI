@@ -69,6 +69,6 @@ namespace HealthCare.Controllers
             }
             return NotFound("Doctor not found");
         }
-    
-}
+
+    }
 }
